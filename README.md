@@ -1,4 +1,4 @@
-# Tweeter_Scraper
+#Scrape Anything!
 
 Selenium & Chrome Web Driver automated scrolling and scraping bot.
 To see full development of bot open Jupyter Notebook and read line by line. 
@@ -11,7 +11,7 @@ There are many examples of them in the scripts, but you can paste the url from w
 -----------------------------------------------------------  0  -----------------------------------------------------------
 
 
-Scrape the new V2 API.
+#Scrape the new V2 API.
 
 Created to integrate Twitter's V2 API, all you need is the bearer token which can now be done in the Twitter developer's platfrom instead of in code.
 
