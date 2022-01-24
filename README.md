@@ -20,6 +20,8 @@ Paste this code in the bearer variable for your script, of save it in ENV / .env
 Read further info for basic Query syntax for this types of requests in; https://developer.twitter.com/en/docs/twitter-api/v1/tweets/search/guides/build-standard-query
 
 Basically: 
+
+
 "space" = %20 
 : = %3         
 @ = %40        
