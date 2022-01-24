@@ -21,10 +21,10 @@ Read further info for basic Query syntax for this types of requests in; https://
 
 Basically: 
 
+"space" = %20
 
-"space" = %20 
-: = %3         
-@ = %40        
-# = %23       
- 
+: = %3
+
+@ = %40
+# = %23
  
