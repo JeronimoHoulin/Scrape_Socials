@@ -115,6 +115,9 @@ while scrolling:
                 
                 
 """Results"""
-print(len(tweet_data))
+print(f'Amount of tweets collected: {len(tweet_data)}')
+print("---------------------------------------------------")
+print(tweet_data)
+
 driver.quit()
 
