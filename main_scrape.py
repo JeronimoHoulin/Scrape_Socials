@@ -1,3 +1,4 @@
+"""Make Everything Happend In Sync"""
 #Imports
 import time 
 from selenium import webdriver
@@ -11,7 +12,6 @@ PATH = "C:\Program Files (x86)\chromedriver.exe"
 driver = webdriver.Chrome(PATH)
 
 """ Variables """
-
 #Making the URLs for the get function
 #tweet_fields = "tweet.fields=created_at,source,text,public_metrics,author_id"
 #query = "%40solana%20and%20ido%20-is%3aretweet"
@@ -21,13 +21,13 @@ driver = webdriver.Chrome(PATH)
 url1 = "https://twitter.com/search?q=%23ido%20AND%20%23solana&src=typed_query"
 url2 = "https://twitter.com/search?q=%23ido%20AND%20%23solana&src=typed_query&f=live"
 ## Or search by Username
-url3 = 'https://twitter.com/google'
+url3 = 'https://twitter.com/IDOhunteer'
 
 #Set other parameters: 
-contains = ""
+stringy = "dckjsadcd"
 
 #GENERATE THE REQUEST !
-driver.get(url3)
+driver.get(url1)
 time.sleep(5)
 
 
@@ -35,7 +35,7 @@ time.sleep(5)
 
 def get_tweet_data(card):
     #Elements
-    #GET FULL XPATH AND FOLLOW THROUGH AFTER TAG "ARTICLE"
+    #GET FULL XPATH AND FOLLOW THROUGH AFTER TAG "ARTICLE" 
     text = card.find_element_by_xpath('./div/div/div/div[2]/div[2]/div[2]/div[1]').text
     responding = card.find_element_by_xpath('./div/div/div/div[2]/div[2]/div[2]/div[2]').text
     handle = card.find_element_by_xpath('.//*[contains(text(),"@")]').text
@@ -45,7 +45,7 @@ def get_tweet_data(card):
     full_txt = text+responding
     
     #Only add tweets w/ contains variable
-    if contains in text:
+    if stringy in text:
         
         #Sponsored tweets have no date
         try: 
@@ -103,15 +103,18 @@ while scrolling:
             scrolling_attempt +=1
             
             #End of scroll region
-            if scrolling_attempt >= 4: 
+            if scrolling_attempt >= 3: 
                 scrolling = False
                 break
             else:
-                print(f'{scrolling_attempt}^st Attempt to scroll. Break in 4th.')
+                print(f'{scrolling_attempt}^st Attempt to scroll. Break in 3rd.')
                 time.sleep(5)
         else:
             last_pos = curr_pos
             break
                 
+                
+"""Results"""
 print(len(tweet_data))
 driver.quit()
+
