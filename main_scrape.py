@@ -1,15 +1,18 @@
-"""Make Everything Happend In Sync"""
-#Imports
+
+"""Imports"""
 import time 
 from selenium import webdriver
+from datetime import datetime
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import StaleElementReferenceException
 
 
 #Creating an instance of a webdriver
 PATH = "C:\Program Files (x86)\chromedriver.exe"
 driver = webdriver.Chrome(PATH)
+
 
 """ Variables """
 #Making the URLs for the get function
@@ -21,46 +24,18 @@ driver = webdriver.Chrome(PATH)
 url1 = "https://twitter.com/search?q=%23ido%20AND%20%23solana&src=typed_query"
 url2 = "https://twitter.com/search?q=%23ido%20AND%20%23solana&src=typed_query&f=live"
 ## Or search by Username
-url3 = 'https://twitter.com/IDOhunteer'
+url3 = 'https://twitter.com/SolanaSensei'
 
-#Set other parameters: 
-stringy = "dckjsadcd"
+#Set other parameters:
+stringy = "HOW I MADE OVER"
+before_date = datetime(2021, 12, 1)
 
 #GENERATE THE REQUEST !
-driver.get(url1)
-time.sleep(5)
-
-
-""" Function """
-
-def get_tweet_data(card):
-    #Elements
-    #GET FULL XPATH AND FOLLOW THROUGH AFTER TAG "ARTICLE" 
-    text = card.find_element_by_xpath('./div/div/div/div[2]/div[2]/div[2]/div[1]').text
-    responding = card.find_element_by_xpath('./div/div/div/div[2]/div[2]/div[2]/div[2]').text
-    handle = card.find_element_by_xpath('.//*[contains(text(),"@")]').text
-    replies = card.find_element_by_xpath('.//div[@data-testid="reply"]').text
-    retweets = card.find_element_by_xpath('.//div[@data-testid="retweet"]').text
-    likes = card.find_element_by_xpath('.//div[@data-testid="like"]').text
-    full_txt = text+responding
+driver.get(url3)
+time.sleep(20)
     
-    #Only add tweets w/ contains variable
-    if stringy in text:
-        
-        #Sponsored tweets have no date
-        try: 
-            date = card.find_element_by_xpath('.//time').get_attribute('datetime')
-        except NoSuchElementException: 
-            return
 
-        #Create a tuple for the tweet
-        tweet = (handle, full_txt, date)
-
-        return tweet
-    
-    
 """ Scrolling """
-
 #Create tweet ID's for already scraped tweets
 tweet_ids = set()
 tweet_data = []
@@ -71,26 +46,81 @@ last_pos = driver.execute_script("return document.body.scrollHeight")
 
 #Set scrolilng
 scrolling = True
-
+in_range = True
 #Looping through tweets
 while scrolling:
     #Define the tweet segment
     cards = driver.find_elements_by_css_selector("article")
     
     for card in cards: 
-        tweet = get_tweet_data(card)
         
-        if tweet:
+        """ Function """
+        try:
+            #Elements
+            #GET FULL XPATH AND FOLLOW THROUGH AFTER TAG "ARTICLE" 
+            text = card.find_element_by_xpath('./div/div/div/div[2]/div[2]/div[2]/div[1]').text
+            responding = card.find_element_by_xpath('./div/div/div/div[2]/div[2]/div[2]/div[2]').text
+            handle = card.find_element_by_xpath('.//*[contains(text(),"@")]').text
+            #replies = card.find_element_by_xpath('.//div[@data-testid="reply"]').text
+            #retweets = card.find_element_by_xpath('.//div[@data-testid="retweet"]').text
+            #likes = card.find_element_by_xpath('.//div[@data-testid="like"]').text
+            pinned = card.find_element_by_xpath('./div/div/div/div[1]/div/div/div/div/div[2]/div/div/div').text
+            full_txt = text+responding
+            
+            print(pinned)
+            #Sponsored tweets have no date
+            date = card.find_element_by_xpath('.//time').get_attribute('datetime')
+
+            """STR date into python datetime object"""
+            #date = date.rstrip(".000Z")
+            date = date[:-5]
+            date = date.replace("T", " ")
+            date_obj = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+
+        #NoSuchElement error handling
+        except NoSuchElementException:
+            pass
+        #StaleElementReferenceException error handling
+        except StaleElementReferenceException:
+            pass
+
+        #Only add tweets w/ contains variable
+        if stringy in text and date_obj > before_date:
+
+            #Create a tuple for the tweet
+            tweet = (handle, date, full_txt)
+            
+            #Create the tweet DF
             tweet_id = ''.join(tweet)
+            
+            #Add only tweets not already seen
             if tweet_id not in tweet_ids:
-                
+                #Add id & data
+                tweet_ids.add(tweet_id)
+                tweet_data.append(tweet)
+
+        #Eliminate all old tweets except for pinned (swap "Tweet fijado" for "Pinned Tweet if your chrome is configured in english")
+        if date_obj < before_date and not "Tweet fijado" in pinned:
+            scrolling = False
+            in_range = False
+            print("tweet out of range")
+            break
+        
+        else:
+            #Create a tuple for the tweet
+            tweet = (handle, date, full_txt)
+            
+            #Create the tweet DF
+            tweet_id = ''.join(tweet)
+            
+            #Add only tweets not already seen
+            if tweet_id not in tweet_ids:
                 #Add id & data
                 tweet_ids.add(tweet_id)
                 tweet_data.append(tweet)
                 
-                
     scrolling_attempt = 0
-    while True:
+    while in_range:
         #Finally adding pagination
         driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
         time.sleep(3)
@@ -108,16 +138,15 @@ while scrolling:
                 break
             else:
                 print(f'{scrolling_attempt}^st Attempt to scroll. Break in 3rd.')
-                time.sleep(5)
+                time.sleep(10)
         else:
             last_pos = curr_pos
             break
                 
-                
 """Results"""
+print("---------------------------------------------------")
 print(f'Amount of tweets collected: {len(tweet_data)}')
 print("---------------------------------------------------")
 print(tweet_data)
 
 driver.quit()
-
