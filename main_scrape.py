@@ -1,10 +1,13 @@
 
+"""For the times when you only need new tweets
+    a.k.a limit the timeframe with before_date."""
 """Imports"""
 import time 
 from selenium import webdriver
 from datetime import datetime
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import StaleElementReferenceException
 
@@ -15,27 +18,26 @@ driver = webdriver.Chrome(PATH)
 
 
 """ Variables """
-#Making the URLs for the get function
-#tweet_fields = "tweet.fields=created_at,source,text,public_metrics,author_id"
-#query = "%40solana%20and%20ido%20-is%3aretweet"
-#url1 = "https://twitter.com/search?query={}&{}".format(query, tweet_fields)
-#Or the url itself (for searched items)
 
-url1 = "https://twitter.com/search?q=%23ido%20AND%20%23solana&src=typed_query"
-url2 = "https://twitter.com/search?q=%23ido%20AND%20%23solana&src=typed_query&f=live"
+#url = "https://twitter.com/search?q=%23ido%20AND%20%23solana&src=typed_query"
+#url = "https://twitter.com/search?q=solana%20AND%20funding&src=typed_query&f=live"
+
+username = "Solana_Nation"
+
 ## Or search by Username
-url3 = 'https://twitter.com/SolanaSensei'
+url = f'https://twitter.com/{username}'
 
 #Set other parameters:
-stringy = "HOW I MADE OVER"
-before_date = datetime(2021, 12, 1)
+stringys = ["fund", "seed", "private", "upcoming", "ido", "Hiring"]
+before_date = datetime(2022, 2, 10)
 
 #GENERATE THE REQUEST !
-driver.get(url3)
-time.sleep(20)
-    
+driver.get(url)
 
-""" Scrolling """
+#wait till load
+time.sleep(30)
+print("Page ready !")
+
 #Create tweet ID's for already scraped tweets
 tweet_ids = set()
 tweet_data = []
@@ -47,6 +49,7 @@ last_pos = driver.execute_script("return document.body.scrollHeight")
 #Set scrolilng
 scrolling = True
 in_range = True
+
 #Looping through tweets
 while scrolling:
     #Define the tweet segment
@@ -64,10 +67,9 @@ while scrolling:
             #replies = card.find_element_by_xpath('.//div[@data-testid="reply"]').text
             #retweets = card.find_element_by_xpath('.//div[@data-testid="retweet"]').text
             #likes = card.find_element_by_xpath('.//div[@data-testid="like"]').text
-            pinned = card.find_element_by_xpath('./div/div/div/div[1]/div/div/div/div/div[2]/div/div/div').text
+            #pinned = card.find_element_by_xpath('./div/div/div/div[1]/div/div/div/div/div[2]/div/div/div').text
             full_txt = text+responding
             
-            print(pinned)
             #Sponsored tweets have no date
             date = card.find_element_by_xpath('.//time').get_attribute('datetime')
 
@@ -76,54 +78,58 @@ while scrolling:
             date = date[:-5]
             date = date.replace("T", " ")
             date_obj = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
-
+            #print(date_obj)
+            
         #NoSuchElement error handling
         except NoSuchElementException:
             pass
         #StaleElementReferenceException error handling
         except StaleElementReferenceException:
             pass
+        
+        if any(s in text.lower() for s in stringys):
+        
+            if date_obj > before_date:
+                #Create a tuple for the tweet
+                tweet = (handle, date, full_txt)
 
-        #Only add tweets w/ contains variable
-        if stringy in text and date_obj > before_date:
+                #Create the tweet DF
+                tweet_id = ''.join(tweet)
 
-            #Create a tuple for the tweet
-            tweet = (handle, date, full_txt)
-            
-            #Create the tweet DF
-            tweet_id = ''.join(tweet)
-            
-            #Add only tweets not already seen
-            if tweet_id not in tweet_ids:
-                #Add id & data
-                tweet_ids.add(tweet_id)
-                tweet_data.append(tweet)
+                #Add only tweets not already seen
+                if tweet_id not in tweet_ids:
+                    #Add id & data
+                    tweet_ids.add(tweet_id)
+                    tweet_data.append(tweet)
+            """       
+            #This makes the bot skip pinned tweets; Because they have dates which are late...
+            if "Tweet fijado".lower() in pinned.lower():
+                if stringy in text:
+                    #Create a tuple for the tweet
+                    tweet = (handle, date, full_txt)
 
-        #Eliminate all old tweets except for pinned (swap "Tweet fijado" for "Pinned Tweet if your chrome is configured in english")
-        if date_obj < before_date and not "Tweet fijado" in pinned:
+                    #Create the tweet DF
+                    tweet_id = ''.join(tweet)
+
+                    #Add only tweets not already seen
+                    if tweet_id not in tweet_ids:
+                        #Add id & data
+                        tweet_ids.add(tweet_id)
+                        tweet_data.append(tweet)
+            """
+        if date_obj < before_date:
             scrolling = False
             in_range = False
             print("tweet out of range")
             break
-        
-        else:
-            #Create a tuple for the tweet
-            tweet = (handle, date, full_txt)
+
             
-            #Create the tweet DF
-            tweet_id = ''.join(tweet)
-            
-            #Add only tweets not already seen
-            if tweet_id not in tweet_ids:
-                #Add id & data
-                tweet_ids.add(tweet_id)
-                tweet_data.append(tweet)
-                
     scrolling_attempt = 0
-    while in_range:
+    
+    while in_range == True:
         #Finally adding pagination
         driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
-        time.sleep(3)
+        time.sleep(5)
 
         #Current position and comparison to check if I'm at the bottom
         curr_pos = driver.execute_script("return document.body.scrollHeight")
@@ -142,11 +148,15 @@ while scrolling:
         else:
             last_pos = curr_pos
             break
+    else:
+        break
                 
 """Results"""
 print("---------------------------------------------------")
 print(f'Amount of tweets collected: {len(tweet_data)}')
 print("---------------------------------------------------")
-print(tweet_data)
+for i in tweet_data: 
+    print("---------0---------")
+    print(i)
 
 driver.quit()
