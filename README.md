@@ -3,6 +3,7 @@
 Selenium & Chrome Web Driver automated scrolling and scraping bot.
 
 --- 0 ---
+
 Requirements:
 1) Python
 2) An IDE of your choice (to run the .py scripts, or Jupyter Notebook to run the .ipynb)
